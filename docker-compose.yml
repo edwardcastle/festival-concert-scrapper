@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - SESSION_SECRET=${SESSION_SECRET:-change-me}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - SERPER_API_KEY=${SERPER_API_KEY:-}
+    restart: unless-stopped
