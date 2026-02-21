@@ -92,18 +92,27 @@ export interface DedupCheck {
   matchField?: string
 }
 
-export interface SearchResult {
-  title: string
-  url: string
-  snippet: string
-  position: number
-  extracted: Partial<Contact>[]
-  extractionMode: 'ai' | 'rule-based'
-}
-
-export interface SearchResultWithDedup extends SearchResult {
-  contacts: Array<{
-    data: Partial<Contact>
-    dedup: DedupCheck
-  }>
+export interface SearchContact {
+  name: string
+  type?: string
+  instagram_handle?: string
+  instagram_url?: string
+  instagram_followers?: string
+  email?: string
+  phone?: string
+  website?: string
+  city?: string
+  country?: string
+  genres?: string
+  cuban_connection?: string
+  event_type?: string
+  notes?: string
+  source_url?: string
+  dedup: {
+    status: DedupResult
+    existingId: number | null
+    matchField: string | null
+  }
+  _added?: boolean
+  _adding?: boolean
 }

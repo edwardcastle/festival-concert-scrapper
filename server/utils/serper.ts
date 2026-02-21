@@ -16,10 +16,7 @@ export async function searchGoogle(
       'X-API-KEY': apiKey,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      q: query,
-      num,
-    }),
+    body: JSON.stringify({ q: query, num }),
   })
 
   if (!response.ok) {
@@ -34,4 +31,34 @@ export async function searchGoogle(
     snippet: r.snippet || '',
     position: r.position || 0,
   }))
+}
+
+/**
+ * Run multiple targeted searches and merge results.
+ * - Original query for general results
+ * - Instagram-targeted query to find actual IG profiles
+ */
+export async function multiSearch(
+  query: string,
+  apiKey: string
+): Promise<SerperResult[]> {
+  const [mainResults, igResults] = await Promise.all([
+    searchGoogle(query, apiKey, 20),
+    searchGoogle(`${query} instagram`, apiKey, 10),
+  ])
+
+  // Merge and deduplicate by URL
+  const seen = new Set<string>()
+  const merged: SerperResult[] = []
+
+  for (const results of [mainResults, igResults]) {
+    for (const r of results) {
+      if (!seen.has(r.link)) {
+        seen.add(r.link)
+        merged.push(r)
+      }
+    }
+  }
+
+  return merged
 }

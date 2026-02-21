@@ -1,6 +1,7 @@
-import { searchGoogle } from '../../utils/serper'
+import { multiSearch } from '../../utils/serper'
 import { extractWithClaude } from '../../utils/claude'
-import { extractFromResults } from '../../utils/rule-extractor'
+import { extractFromResults, mergeEntityLists } from '../../utils/rule-extractor'
+import type { ExtractedContact } from '../../utils/rule-extractor'
 import { checkDuplicate } from '../../utils/dedup'
 import { db } from '../../db'
 import { searchHistory } from '../../db/schema'
@@ -22,84 +23,68 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 1. Search Google via Serper
-  const serperResults = await searchGoogle(query, config.serperApiKey)
+  // 1. Multi-search via Serper (original query + instagram-targeted)
+  const serperResults = await multiSearch(query, config.serperApiKey as string)
 
   if (serperResults.length === 0) {
-    return { results: [], mode: 'none' }
+    return { contacts: [], mode: 'none', searchCount: 0 }
   }
 
-  // 2. Extract entities
-  let extractedEntities: any[] | null = null
+  // 2. Always run rule-based extraction (fast, works as base)
+  const ruleEntities = extractFromResults(serperResults)
+
+  // 3. Try Claude AI enrichment if API key available
+  let entities: ExtractedContact[]
   let mode: 'ai' | 'rule-based' = 'rule-based'
 
   if (config.anthropicApiKey) {
-    extractedEntities = await extractWithClaude(
+    const aiEntities = await extractWithClaude(
       serperResults,
-      config.anthropicApiKey
+      config.anthropicApiKey as string
     )
-    if (extractedEntities && extractedEntities.length > 0) {
+    if (aiEntities && aiEntities.length > 0) {
+      // Merge: AI entities take priority, rule-based fills gaps
+      entities = mergeEntityLists(aiEntities, ruleEntities)
       mode = 'ai'
+    } else {
+      entities = ruleEntities
     }
+  } else {
+    entities = ruleEntities
   }
 
-  // Fallback to rule-based
-  if (!extractedEntities || extractedEntities.length === 0) {
-    extractedEntities = extractFromResults(serperResults)
-    mode = 'rule-based'
-  }
-
-  // 3. Check dedup for each entity
-  const resultsWithDedup = await Promise.all(
-    serperResults.map(async (sr) => {
-      // Find entities that came from this search result
-      const relatedEntities = extractedEntities!.filter((e: any) => {
-        if (mode === 'rule-based') {
-          return e.website === sr.link
-        }
-        // For AI mode, match by name similarity to title
-        return true
-      })
-
-      const contacts = await Promise.all(
-        relatedEntities.map(async (entity: any) => {
-          const dedup = await checkDuplicate(entity)
-          return { data: entity, dedup }
-        })
-      )
-
+  // 4. Check dedup for each entity against DB
+  const contactsWithDedup = await Promise.all(
+    entities.map(async (entity) => {
+      const dedup = await checkDuplicate(entity)
       return {
-        title: sr.title,
-        url: sr.link,
-        snippet: sr.snippet,
-        position: sr.position,
-        extractionMode: mode,
-        contacts,
+        ...entity,
+        dedup: {
+          status: dedup.status,
+          existingId: dedup.existingContact?.id || null,
+          matchField: dedup.matchField || null,
+        },
       }
     })
   )
 
-  // Filter out results with no contacts
-  const filteredResults = resultsWithDedup.filter(
-    (r) => r.contacts.length > 0
-  )
+  // 5. Log to search history
+  const newCount = contactsWithDedup.filter(
+    (c) => c.dedup.status === 'new'
+  ).length
 
-  // 4. Log to search history
-  const newCount = filteredResults
-    .flatMap((r) => r.contacts)
-    .filter((c) => c.dedup.status === 'new').length
-
-  await db.insert(searchHistory)
+  await db
+    .insert(searchHistory)
     .values({
       query,
-      results_count: filteredResults.length,
+      results_count: contactsWithDedup.length,
       new_contacts: newCount,
     })
     .run()
 
   return {
-    results: filteredResults,
+    contacts: contactsWithDedup,
     mode,
-    totalResults: serperResults.length,
+    searchCount: serperResults.length,
   }
 })

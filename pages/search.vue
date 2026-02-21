@@ -31,14 +31,14 @@
       </div>
     </div>
 
-    <!-- Mode badge -->
+    <!-- Mode badge + stats -->
     <div v-if="mode" class="flex items-center justify-center gap-2 mb-4">
       <Tag
         :value="mode === 'ai' ? 'AI Extracted' : 'Auto-extracted — review recommended'"
         :severity="mode === 'ai' ? 'success' : 'warn'"
       />
       <span class="text-sm text-[var(--color-text-muted)]">
-        {{ results.length }} results with extracted contacts
+        {{ contacts.length }} contacts found from {{ searchCount }} Google results
       </span>
     </div>
 
@@ -46,7 +46,7 @@
     <div v-if="loading" class="flex flex-col items-center py-12">
       <ProgressSpinner />
       <p class="text-sm text-[var(--color-text-muted)] mt-4">
-        Searching and extracting contacts...
+        Searching Google + Instagram and extracting contacts...
       </p>
     </div>
 
@@ -60,9 +60,12 @@
     </div>
 
     <!-- Results -->
-    <div v-if="results.length > 0" class="space-y-4">
+    <div v-if="contacts.length > 0" class="space-y-3">
       <!-- Bulk add button -->
-      <div class="flex justify-end">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm text-[var(--color-text-muted)]">
+          {{ newCount }} new contacts ready to add
+        </span>
         <Button
           :label="`Add All New (${newCount})`"
           icon="pi pi-plus"
@@ -75,11 +78,17 @@
       </div>
 
       <SearchResultCard
-        v-for="(result, i) in results"
+        v-for="(contact, i) in contacts"
         :key="i"
-        :result="result"
-        @add="handleAdd(result, $event)"
+        :contact="contact"
+        @add="handleAdd(contact)"
       />
+    </div>
+
+    <!-- Empty state -->
+    <div v-if="!loading && mode && contacts.length === 0" class="text-center py-12">
+      <i class="pi pi-search text-4xl text-[var(--color-text-muted)] mb-3" />
+      <p class="text-[var(--color-text-muted)]">No contacts found. Try a different query.</p>
     </div>
   </div>
 </template>
@@ -92,9 +101,10 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import ProgressSpinner from 'primevue/progressspinner'
 import { useToast } from 'primevue/usetoast'
+import type { SearchContact } from '~/types'
 
 const toast = useToast()
-const { results, loading, mode, error, search, addContact, addAllNew } =
+const { contacts, loading, mode, error, searchCount, search, addContact, addAllNew } =
   useSearch()
 
 const query = ref('')
@@ -112,9 +122,7 @@ const suggestions = [
 ]
 
 const newCount = computed(() =>
-  results.value
-    .flatMap((r) => r.contacts)
-    .filter((c) => c.dedup.status === 'new' && !c._added).length
+  contacts.value.filter((c) => c.dedup.status === 'new' && !c._added).length
 )
 
 async function handleSearch() {
@@ -122,13 +130,13 @@ async function handleSearch() {
   await search(query.value)
 }
 
-async function handleAdd(result: any, [contact, idx]: [any, number]) {
+async function handleAdd(contact: SearchContact) {
   contact._adding = true
   try {
-    await addContact(contact.data, query.value)
+    await addContact(contact, query.value)
     contact._added = true
     contact.dedup.status = 'exact_match'
-    toast.add({ severity: 'success', summary: `Added ${contact.data.name}`, life: 3000 })
+    toast.add({ severity: 'success', summary: `Added ${contact.name}`, life: 3000 })
   } catch (e: any) {
     toast.add({ severity: 'error', summary: 'Failed to add contact', life: 3000 })
   } finally {
@@ -141,13 +149,11 @@ async function handleAddAll() {
   try {
     const res = await addAllNew(query.value)
     // Mark all new as added
-    results.value.forEach((r) => {
-      r.contacts.forEach((c: any) => {
-        if (c.dedup.status === 'new') {
-          c._added = true
-          c.dedup.status = 'exact_match'
-        }
-      })
+    contacts.value.forEach((c) => {
+      if (c.dedup.status === 'new') {
+        c._added = true
+        c.dedup.status = 'exact_match'
+      }
     })
     toast.add({
       severity: 'success',
