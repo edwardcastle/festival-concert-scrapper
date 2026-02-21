@@ -39,5 +39,11 @@ export default defineNuxtConfig({
     experimental: {
       asyncContext: true,
     },
+    externals: {
+      inline: [],
+    },
+    rollupConfig: {
+      external: ['playwright-chromium'],
+    },
   },
 })

@@ -1,18 +1,3 @@
-import type { Browser } from 'playwright-chromium'
-
-let browser: Browser | null = null
-
-async function getBrowser(): Promise<Browser> {
-  if (browser && browser.isConnected()) return browser
-
-  const { chromium } = await import('playwright-chromium')
-  browser = await chromium.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  })
-  return browser
-}
-
 export interface InstagramProfile {
   followers?: string
   bio?: string
@@ -20,12 +5,37 @@ export interface InstagramProfile {
   website?: string
 }
 
+export interface WebsiteData {
+  emails: string[]
+  phones: string[]
+  socialLinks: string[]
+}
+
+let browser: any = null
+
+async function getBrowser(): Promise<any> {
+  if (browser && browser.isConnected()) return browser
+
+  try {
+    const pw = await import('playwright-chromium')
+    browser = await pw.chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    })
+    return browser
+  } catch {
+    return null
+  }
+}
+
 export async function scrapeInstagramProfile(
   handle: string
 ): Promise<InstagramProfile | null> {
+  const b = await getBrowser()
+  if (!b) return null
+
   let page = null
   try {
-    const b = await getBrowser()
     page = await b.newPage()
     page.setDefaultTimeout(15000)
 
@@ -33,9 +43,8 @@ export async function scrapeInstagramProfile(
       waitUntil: 'domcontentloaded',
     })
 
-    // Extract from meta tags
     const description = await page
-      .$eval('meta[property="og:description"]', (el) =>
+      .$eval('meta[property="og:description"]', (el: any) =>
         el.getAttribute('content')
       )
       .catch(() => null)
@@ -43,7 +52,6 @@ export async function scrapeInstagramProfile(
     const result: InstagramProfile = {}
 
     if (description) {
-      // Parse followers from "X Followers, Y Following, Z Posts"
       const followersMatch = description.match(
         /([\d,.]+[KMB]?)\s*Followers/i
       )
@@ -51,13 +59,11 @@ export async function scrapeInstagramProfile(
         result.followers = followersMatch[1]
       }
 
-      // Extract bio part after the counts
       const bioParts = description.split(' - ')
       if (bioParts.length > 1) {
         const bio = bioParts.slice(1).join(' - ').trim()
         result.bio = bio
 
-        // Extract email from bio
         const emailMatch = bio.match(
           /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
         )
@@ -67,9 +73,8 @@ export async function scrapeInstagramProfile(
       }
     }
 
-    // Try to get external URL
     const externalUrl = await page
-      .$eval('a[href*="l.instagram.com"]', (el) => el.getAttribute('href'))
+      .$eval('a[href*="l.instagram.com"]', (el: any) => el.getAttribute('href'))
       .catch(() => null)
 
     if (externalUrl) {
@@ -89,18 +94,14 @@ export async function scrapeInstagramProfile(
   }
 }
 
-export interface WebsiteData {
-  emails: string[]
-  phones: string[]
-  socialLinks: string[]
-}
-
 export async function scrapeWebsite(
   url: string
 ): Promise<WebsiteData | null> {
+  const b = await getBrowser()
+  if (!b) return null
+
   let page = null
   try {
-    const b = await getBrowser()
     page = await b.newPage()
     page.setDefaultTimeout(15000)
 
@@ -108,34 +109,31 @@ export async function scrapeWebsite(
 
     const content = await page.content()
 
-    // Extract emails
     const emailMatches = content.match(
       /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
     )
     const emails = [
       ...new Set(
         (emailMatches || []).filter(
-          (e) => !e.includes('example.com') && !e.includes('sentry')
+          (e: string) => !e.includes('example.com') && !e.includes('sentry')
         )
       ),
     ]
 
-    // Extract phone numbers
     const phoneMatches = content.match(
       /(?:\+\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/g
     )
     const phones = [...new Set(phoneMatches || [])]
 
-    // Extract social links
     const socialLinks = await page.$$eval(
       'a[href*="instagram.com"], a[href*="facebook.com"], a[href*="twitter.com"], a[href*="tiktok.com"]',
-      (els) => els.map((el) => el.getAttribute('href')).filter(Boolean) as string[]
+      (els: any[]) => els.map((el: any) => el.getAttribute('href')).filter(Boolean)
     )
 
     return {
       emails: emails.slice(0, 5),
       phones: phones.slice(0, 3),
-      socialLinks: [...new Set(socialLinks)],
+      socialLinks: [...new Set(socialLinks)] as string[],
     }
   } catch (e) {
     console.error(`Failed to scrape website ${url}:`, e)
