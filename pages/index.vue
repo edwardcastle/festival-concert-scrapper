@@ -423,11 +423,14 @@ async function handleBulkStatus() {
 }
 
 async function handleBulkDelete() {
-  for (const c of selectedContacts.value) {
-    await deleteContact(c.id)
-  }
+  const ids = selectedContacts.value.map((c) => c.id)
+  await $fetch('/api/contacts/bulk-delete', {
+    method: 'POST',
+    body: { ids },
+  })
   selectedContacts.value = []
-  toast.add({ severity: 'success', summary: 'Contacts deleted', life: 3000 })
+  await fetchContacts()
+  toast.add({ severity: 'success', summary: `Deleted ${ids.length} contacts`, life: 3000 })
 }
 
 async function handleExport() {
