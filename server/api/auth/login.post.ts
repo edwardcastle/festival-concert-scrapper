@@ -1,6 +1,6 @@
 import {
   verifyPassword,
-  createSession,
+  createSessionToken,
   setSessionCookie,
 } from '../../utils/auth'
 
@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Invalid password' })
   }
 
-  const token = createSession()
+  const token = createSessionToken()
   setSessionCookie(event, token)
 
   return { success: true }

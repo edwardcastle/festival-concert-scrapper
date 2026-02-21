@@ -1,7 +1,5 @@
-import { createHash, randomBytes } from 'crypto'
+import { createHash, createHmac } from 'crypto'
 import type { H3Event } from 'h3'
-
-const sessions = new Map<string, { createdAt: number }>()
 
 function getSessionSecret(): string {
   const config = useRuntimeConfig()
@@ -13,29 +11,39 @@ function getAdminPassword(): string {
   return config.adminPassword as string
 }
 
-export function hashPassword(password: string): string {
-  return createHash('sha256').update(password).digest('hex')
-}
-
 export function verifyPassword(password: string): boolean {
   return password === getAdminPassword()
 }
 
-export function createSession(): string {
-  const token = randomBytes(32).toString('hex')
-  const hash = createHash('sha256')
-    .update(token + getSessionSecret())
+// Stateless signed token — works on serverless
+export function createSessionToken(): string {
+  const payload = `authenticated:${Date.now()}`
+  const signature = createHmac('sha256', getSessionSecret())
+    .update(payload)
     .digest('hex')
-  sessions.set(hash, { createdAt: Date.now() })
-  return hash
+  return `${Buffer.from(payload).toString('base64')}.${signature}`
 }
 
 export function validateSession(token: string): boolean {
-  return sessions.has(token)
-}
+  try {
+    const [payloadB64, signature] = token.split('.')
+    if (!payloadB64 || !signature) return false
 
-export function destroySession(token: string): void {
-  sessions.delete(token)
+    const payload = Buffer.from(payloadB64, 'base64').toString()
+    const expected = createHmac('sha256', getSessionSecret())
+      .update(payload)
+      .digest('hex')
+
+    if (signature !== expected) return false
+
+    // Check if token is less than 7 days old
+    const match = payload.match(/authenticated:(\d+)/)
+    if (!match) return false
+    const age = Date.now() - Number(match[1])
+    return age < 7 * 24 * 60 * 60 * 1000
+  } catch {
+    return false
+  }
 }
 
 export function getSessionFromEvent(event: H3Event): string | null {
@@ -45,10 +53,10 @@ export function getSessionFromEvent(event: H3Event): string | null {
 export function setSessionCookie(event: H3Event, token: string): void {
   setCookie(event, 'session', token, {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
   })
 }
 
