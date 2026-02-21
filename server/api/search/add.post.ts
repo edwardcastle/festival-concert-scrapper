@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-      db.insert(contacts)
+      await db.insert(contacts)
         .values({
           name: item.name,
           type: item.type || null,

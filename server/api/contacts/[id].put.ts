@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Invalid contact ID' })
   }
 
-  const existing = db
+  const existing = await db
     .select()
     .from(contacts)
     .where(eq(contacts.id, id))
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     body.instagram_handle = normalizeHandle(body.instagram_handle)
   }
 
-  db.update(contacts)
+  await db.update(contacts)
     .set({
       ...body,
       updated_at: sql`datetime('now')`,
@@ -37,5 +37,5 @@ export default defineEventHandler(async (event) => {
     .where(eq(contacts.id, id))
     .run()
 
-  return db.select().from(contacts).where(eq(contacts.id, id)).get()
+  return await db.select().from(contacts).where(eq(contacts.id, id)).get()
 })

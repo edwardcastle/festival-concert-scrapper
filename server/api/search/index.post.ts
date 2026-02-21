@@ -89,7 +89,7 @@ export default defineEventHandler(async (event) => {
     .flatMap((r) => r.contacts)
     .filter((c) => c.dedup.status === 'new').length
 
-  db.insert(searchHistory)
+  await db.insert(searchHistory)
     .values({
       query,
       results_count: filteredResults.length,

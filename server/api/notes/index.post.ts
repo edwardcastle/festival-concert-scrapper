@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify contact exists
-  const contact = db
+  const contact = await db
     .select()
     .from(contacts)
     .where(eq(contacts.id, body.contact_id))
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Contact not found' })
   }
 
-  const result = db
+  const result = await db
     .insert(notes)
     .values({
       contact_id: body.contact_id,

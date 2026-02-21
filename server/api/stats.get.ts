@@ -2,16 +2,16 @@ import { db } from '../db'
 import { contacts, searchHistory } from '../db/schema'
 import { sql, desc, and, gte } from 'drizzle-orm'
 
-export default defineEventHandler(() => {
+export default defineEventHandler(async () => {
   // Total contacts
-  const totalResult = db
+  const totalResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(contacts)
     .get()
   const total = totalResult?.count || 0
 
   // Contacts by status
-  const byStatus = db
+  const byStatus = await db
     .select({
       status: contacts.status,
       count: sql<number>`count(*)`,
@@ -21,7 +21,7 @@ export default defineEventHandler(() => {
     .all()
 
   // Contacts by country (top 15)
-  const byCountry = db
+  const byCountry = await db
     .select({
       country: contacts.country,
       count: sql<number>`count(*)`,
@@ -34,7 +34,7 @@ export default defineEventHandler(() => {
     .all()
 
   // Contacts by type
-  const byType = db
+  const byType = await db
     .select({
       type: contacts.type,
       count: sql<number>`count(*)`,
@@ -45,7 +45,7 @@ export default defineEventHandler(() => {
     .all()
 
   // Cuban-connected
-  const cubanResult = db
+  const cubanResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(contacts)
     .where(
@@ -61,7 +61,7 @@ export default defineEventHandler(() => {
   const thisMonth = new Date()
   thisMonth.setDate(1)
   const monthStr = thisMonth.toISOString().slice(0, 10)
-  const thisMonthResult = db
+  const thisMonthResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(contacts)
     .where(gte(contacts.created_at, monthStr))
@@ -73,7 +73,7 @@ export default defineEventHandler(() => {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   const thirtyDaysStr = thirtyDaysAgo.toISOString().slice(0, 10)
 
-  const overTime = db
+  const overTime = await db
     .select({
       date: sql<string>`date(${contacts.created_at})`,
       count: sql<number>`count(*)`,
@@ -85,7 +85,7 @@ export default defineEventHandler(() => {
     .all()
 
   // Recent search history
-  const recentSearches = db
+  const recentSearches = await db
     .select()
     .from(searchHistory)
     .orderBy(desc(searchHistory.created_at))
@@ -93,7 +93,7 @@ export default defineEventHandler(() => {
     .all()
 
   // Total searches
-  const totalSearchesResult = db
+  const totalSearchesResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(searchHistory)
     .get()

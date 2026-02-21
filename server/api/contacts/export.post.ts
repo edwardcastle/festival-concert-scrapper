@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
 
   const where = conditions.length > 0 ? and(...conditions) : undefined
 
-  const data = db
+  const data = await db
     .select()
     .from(contacts)
     .where(where)

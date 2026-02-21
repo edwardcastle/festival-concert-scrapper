@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const result = db.insert(contacts).values({
+  const result = await db.insert(contacts).values({
     name: body.name,
     type: body.type || null,
     instagram_handle: body.instagram_handle,

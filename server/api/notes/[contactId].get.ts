@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Invalid contact ID' })
   }
 
-  return db
+  return await db
     .select()
     .from(notes)
     .where(eq(notes.contact_id, contactId))

@@ -4,7 +4,7 @@ import { sql } from 'drizzle-orm'
 import { statSync } from 'fs'
 import { join } from 'path'
 
-export default defineEventHandler(() => {
+export default defineEventHandler(async () => {
   const config = useRuntimeConfig()
 
   const aiAvailable = !!config.anthropicApiKey
@@ -17,7 +17,7 @@ export default defineEventHandler(() => {
     dbSize = kb > 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb.toFixed(0)} KB`
   } catch {}
 
-  const countResult = db
+  const countResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(contacts)
     .get()

@@ -10,10 +10,10 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.0",
     "@primevue/nuxt-module": "^4.5.4",
     "@primevue/themes": "^4.5.4",
     "@tailwindcss/vite": "^4.2.0",
-    "better-sqlite3": "^12.6.2",
     "chart.js": "^4.5.1",
     "drizzle-orm": "^0.45.1",
     "nuxt": "^3.21.1",
@@ -26,7 +26,6 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
     "drizzle-kit": "^0.31.9"
   }
 }

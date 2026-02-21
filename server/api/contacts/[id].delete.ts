@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Invalid contact ID' })
   }
 
-  const existing = db
+  const existing = await db
     .select()
     .from(contacts)
     .where(eq(contacts.id, id))
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Contact not found' })
   }
 
-  db.delete(contacts).where(eq(contacts.id, id)).run()
+  await db.delete(contacts).where(eq(contacts.id, id)).run()
 
   return { success: true }
 })

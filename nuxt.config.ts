@@ -1,4 +1,5 @@
 import tailwindcss from '@tailwindcss/vite'
+import Aura from '@primevue/themes/aura'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -14,12 +15,13 @@ export default defineNuxtConfig({
 
   primevue: {
     options: {
-      theme: 'none',
+      theme: {
+        preset: Aura,
+        options: {
+          darkModeSelector: '.dark-mode',
+        },
+      },
       ripple: true,
-    },
-    cssLayer: {
-      name: 'primevue',
-      order: 'theme, base, primevue',
     },
   },
 

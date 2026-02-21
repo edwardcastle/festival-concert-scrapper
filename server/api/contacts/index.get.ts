@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
   // Get sort column reference
   const sortColumn = (contacts as any)[sortField] || contacts.updated_at
 
-  const data = db
+  const data = await db
     .select()
     .from(contacts)
     .where(where)
@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
     .offset(offset)
     .all()
 
-  const totalResult = db
+  const totalResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(contacts)
     .where(where)

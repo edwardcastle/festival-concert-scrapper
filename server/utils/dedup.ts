@@ -34,7 +34,7 @@ export async function checkDuplicate(
   // Tier 1: Exact instagram_handle match
   if (data.instagram_handle) {
     const normalized = normalizeHandle(data.instagram_handle)
-    const existing = db
+    const existing = await db
       .select()
       .from(contacts)
       .where(eq(contacts.instagram_handle, normalized))
@@ -52,7 +52,7 @@ export async function checkDuplicate(
   // Tier 2: Fuzzy name match
   if (data.name) {
     const trimmedName = data.name.trim().toLowerCase()
-    const allContacts = db
+    const allContacts = await db
       .select({ id: contacts.id, name: contacts.name })
       .from(contacts)
       .all()
@@ -60,7 +60,7 @@ export async function checkDuplicate(
     for (const c of allContacts) {
       const existingName = c.name.trim().toLowerCase()
       if (existingName === trimmedName) {
-        const full = db
+        const full = await db
           .select()
           .from(contacts)
           .where(eq(contacts.id, c.id))
@@ -72,7 +72,7 @@ export async function checkDuplicate(
         }
       }
       if (levenshtein(existingName, trimmedName) <= 3) {
-        const full = db
+        const full = await db
           .select()
           .from(contacts)
           .where(eq(contacts.id, c.id))

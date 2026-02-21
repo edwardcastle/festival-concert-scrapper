@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'contactId required' })
   }
 
-  const contact = db
+  const contact = await db
     .select()
     .from(contacts)
     .where(eq(contacts.id, contactId))
@@ -70,10 +70,10 @@ export default defineEventHandler(async (event) => {
 
   if (Object.keys(updates).length > 0) {
     updates.updated_at = sql`datetime('now')`
-    db.update(contacts).set(updates).where(eq(contacts.id, contactId)).run()
+    await db.update(contacts).set(updates).where(eq(contacts.id, contactId)).run()
   }
 
-  const updated = db
+  const updated = await db
     .select()
     .from(contacts)
     .where(eq(contacts.id, contactId))

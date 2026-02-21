@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Status is required' })
   }
 
-  db.update(contacts)
+  await db.update(contacts)
     .set({
       status,
       updated_at: sql`datetime('now')`,

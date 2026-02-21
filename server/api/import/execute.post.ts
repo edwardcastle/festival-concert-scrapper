@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-      db.insert(contacts)
+      await db.insert(contacts)
         .values({
           name: mapped.name,
           type: mapped.type || null,

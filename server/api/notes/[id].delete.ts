@@ -9,12 +9,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Invalid note ID' })
   }
 
-  const existing = db.select().from(notes).where(eq(notes.id, id)).get()
+  const existing = await db.select().from(notes).where(eq(notes.id, id)).get()
   if (!existing) {
     throw createError({ statusCode: 404, message: 'Note not found' })
   }
 
-  db.delete(notes).where(eq(notes.id, id)).run()
+  await db.delete(notes).where(eq(notes.id, id)).run()
 
   return { success: true }
 })
