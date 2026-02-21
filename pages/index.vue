@@ -26,64 +26,126 @@
       </div>
     </div>
 
-    <!-- Filter bar -->
-    <div
-      class="flex flex-wrap gap-2 mb-4 p-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg"
-    >
-      <IconField class="flex-1 min-w-0">
-        <InputIcon class="pi pi-search" />
-        <InputText
-          v-model="filters.search"
-          placeholder="Search..."
-          class="w-full"
-          @keyup.enter="applyFilters"
+    <!-- Search + Filter toggle (mobile) -->
+    <div class="mb-3 md:mb-4">
+      <div class="flex gap-2 mb-2">
+        <IconField class="flex-1">
+          <InputIcon class="pi pi-search" />
+          <InputText
+            v-model="filters.search"
+            placeholder="Search contacts..."
+            class="w-full"
+            @keyup.enter="applyFilters"
+          />
+        </IconField>
+        <Button
+          :icon="showFilters ? 'pi pi-times' : 'pi pi-filter'"
+          :severity="showFilters ? 'info' : 'secondary'"
+          size="small"
+          class="md:hidden shrink-0"
+          @click="showFilters = !showFilters"
         />
-      </IconField>
-      <MultiSelect
-        v-model="filters.status"
-        :options="statusOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Status"
-        class="w-28 md:w-36"
-        @change="applyFilters"
-      />
-      <MultiSelect
-        v-model="filters.country"
-        :options="countryOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Country"
-        class="w-28 md:w-36 hidden sm:flex"
-        filter
-        @change="applyFilters"
-      />
-      <Select
-        v-model="filters.type"
-        :options="typeOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Type"
-        showClear
-        class="w-28 md:w-32 hidden sm:flex"
-        @change="applyFilters"
-      />
-      <ToggleButton
-        v-model="cubanToggle"
-        onLabel="Cuban ★"
-        offLabel="Cuban"
-        onIcon="pi pi-star-fill"
-        offIcon="pi pi-star"
-        class="w-24 hidden md:flex"
-        @change="handleCubanToggle"
-      />
-      <Button
-        icon="pi pi-filter-slash"
-        severity="secondary"
-        size="small"
-        @click="resetFilters"
-        v-tooltip="'Clear filters'"
-      />
+        <!-- Desktop filters inline -->
+        <MultiSelect
+          v-model="filters.status"
+          :options="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Status"
+          class="w-36 hidden md:flex"
+          @change="applyFilters"
+        />
+        <MultiSelect
+          v-model="filters.country"
+          :options="countryOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Country"
+          class="w-36 hidden md:flex"
+          filter
+          @change="applyFilters"
+        />
+        <Select
+          v-model="filters.type"
+          :options="typeOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Type"
+          showClear
+          class="w-32 hidden md:flex"
+          @change="applyFilters"
+        />
+        <ToggleButton
+          v-model="cubanToggle"
+          onLabel="Cuban ★"
+          offLabel="Cuban"
+          onIcon="pi pi-star-fill"
+          offIcon="pi pi-star"
+          class="w-24 hidden md:flex"
+          @change="handleCubanToggle"
+        />
+        <Button
+          icon="pi pi-filter-slash"
+          severity="secondary"
+          size="small"
+          class="hidden md:flex"
+          @click="resetFilters"
+          v-tooltip="'Clear filters'"
+        />
+      </div>
+
+      <!-- Mobile expanded filters -->
+      <div
+        v-if="showFilters"
+        class="md:hidden grid grid-cols-2 gap-2 p-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg"
+      >
+        <MultiSelect
+          v-model="filters.status"
+          :options="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Status"
+          class="w-full"
+          @change="applyFilters"
+        />
+        <MultiSelect
+          v-model="filters.country"
+          :options="countryOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Country"
+          class="w-full"
+          filter
+          @change="applyFilters"
+        />
+        <Select
+          v-model="filters.type"
+          :options="typeOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Type"
+          showClear
+          class="w-full"
+          @change="applyFilters"
+        />
+        <ToggleButton
+          v-model="cubanToggle"
+          onLabel="Cuban ★"
+          offLabel="Cuban"
+          onIcon="pi pi-star-fill"
+          offIcon="pi pi-star"
+          class="w-full"
+          @change="handleCubanToggle"
+        />
+        <Button
+          label="Clear All"
+          icon="pi pi-filter-slash"
+          severity="secondary"
+          size="small"
+          class="col-span-2"
+          @click="resetFilters; showFilters = false"
+        />
+      </div>
     </div>
 
     <!-- Bulk actions -->
@@ -406,6 +468,7 @@ const {
 const selectedContacts = ref<Contact[]>([])
 const bulkStatus = ref('')
 const cubanToggle = ref(false)
+const showFilters = ref(false)
 const showAddDialog = ref(false)
 const saving = ref(false)
 const newContact = ref<Partial<Contact>>({

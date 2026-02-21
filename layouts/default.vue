@@ -1,20 +1,8 @@
 <template>
   <div class="flex min-h-screen bg-[var(--color-navy)]">
-    <!-- Mobile overlay -->
-    <div
-      v-if="sidebarOpen"
-      class="fixed inset-0 bg-black/50 z-40 md:hidden"
-      @click="sidebarOpen = false"
-    />
-
-    <!-- Sidebar -->
+    <!-- Desktop Sidebar (hidden on mobile) -->
     <aside
-      :class="[
-        'fixed md:sticky top-0 left-0 z-50 h-screen w-64 flex flex-col',
-        'bg-[var(--color-navy-dark)] border-r border-[var(--color-border)]',
-        'transition-transform duration-200',
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-      ]"
+      class="hidden md:flex sticky top-0 left-0 h-screen w-64 flex-col bg-[var(--color-navy-dark)] border-r border-[var(--color-border)]"
     >
       <!-- Logo -->
       <div class="p-5 border-b border-[var(--color-border)]">
@@ -36,7 +24,6 @@
               ? 'bg-[var(--color-electric-blue)]/20 text-[var(--color-electric-blue)]'
               : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-white',
           ]"
-          @click="sidebarOpen = false"
         >
           <i :class="item.icon" class="text-base w-5 text-center" />
           <span>{{ item.label }}</span>
@@ -61,36 +48,44 @@
 
     <!-- Main content -->
     <div class="flex-1 flex flex-col min-w-0">
-      <!-- Top bar (mobile) -->
-      <header
-        class="md:hidden flex items-center justify-between p-4 border-b border-[var(--color-border)]"
-      >
-        <button
-          class="text-white p-1"
-          @click="sidebarOpen = !sidebarOpen"
-        >
-          <i class="pi pi-bars text-xl" />
-        </button>
+      <!-- Mobile top bar -->
+      <header class="md:hidden flex items-center justify-center p-3 border-b border-[var(--color-border)] bg-[var(--color-navy-dark)]">
         <span class="text-lg font-bold">
-          <span class="text-[var(--color-gold)]">Latin</span>
-          <span class="text-white">Connect</span>
+          <span class="text-[var(--color-gold)]">Latin</span><span class="text-white">Connect</span>
         </span>
-        <div class="w-8" />
       </header>
 
-      <!-- Page content -->
-      <main class="flex-1 p-4 md:p-6 overflow-x-hidden">
+      <!-- Page content — extra bottom padding on mobile for bottom nav -->
+      <main class="flex-1 p-3 md:p-6 pb-20 md:pb-6 overflow-x-hidden">
         <slot />
       </main>
     </div>
+
+    <!-- Mobile bottom navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--color-navy-dark)] border-t border-[var(--color-border)] safe-area-bottom">
+      <div class="flex items-stretch">
+        <NuxtLink
+          v-for="item in navItems"
+          :key="item.path"
+          :to="item.path"
+          class="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors"
+          :class="[
+            isActive(item.path)
+              ? 'text-[var(--color-electric-blue)]'
+              : 'text-[var(--color-text-muted)]',
+          ]"
+        >
+          <i :class="item.icon" class="text-lg" />
+          <span class="text-[10px] leading-tight">{{ item.label }}</span>
+        </NuxtLink>
+      </div>
+    </nav>
   </div>
 </template>
 
 <script setup lang="ts">
 const route = useRoute()
-const sidebarOpen = ref(false)
 
-const config = useRuntimeConfig()
 const aiMode = ref(false)
 
 onMounted(async () => {

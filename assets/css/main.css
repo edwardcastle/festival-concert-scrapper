@@ -46,11 +46,16 @@ body {
   background: var(--color-electric-blue);
 }
 
-/* Mobile: prevent horizontal overflow */
+/* Safe area for bottom nav on notched iPhones */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Mobile improvements */
 @media (max-width: 767px) {
-  .p-datatable,
   .p-dialog {
     max-width: 100vw;
+    margin: 0;
   }
 
   .p-dialog .p-dialog-content {
@@ -65,5 +70,10 @@ body {
   /* Touch-friendly tap targets */
   .p-button.p-button-sm {
     min-height: 2.5rem;
+  }
+
+  /* Better mobile input sizing */
+  .p-inputtext {
+    font-size: 16px; /* Prevents iOS zoom on focus */
   }
 }
