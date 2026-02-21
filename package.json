@@ -1,0 +1,31 @@
+{
+  "name": "festival-club-scrapper",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@primevue/nuxt-module": "^4.5.4",
+    "@primevue/themes": "^4.5.4",
+    "@tailwindcss/vite": "^4.2.0",
+    "better-sqlite3": "^12.6.2",
+    "chart.js": "^4.5.1",
+    "drizzle-orm": "^0.45.1",
+    "nuxt": "^3.21.1",
+    "primevue": "^4.5.4",
+    "tailwindcss": "^4.2.0",
+    "tailwindcss-primeui": "^0.6.1",
+    "vue": "^3.5.28",
+    "vue-router": "^4.6.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "drizzle-kit": "^0.31.9"
+  }
+}
