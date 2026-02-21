@@ -40,7 +40,7 @@ export default defineNuxtConfig({
       asyncContext: true,
     },
     externals: {
-      inline: [],
+      inline: ['xlsx'],
     },
     rollupConfig: {
       external: ['playwright-chromium'],
