@@ -23,17 +23,17 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 1. Multi-search via Serper (original query + instagram-targeted)
+  // 1. Multi-search via Serper (original + instagram keyword + site:instagram.com)
   const serperResults = await multiSearch(query, config.serperApiKey as string)
 
   if (serperResults.length === 0) {
     return { contacts: [], mode: 'none', searchCount: 0 }
   }
 
-  // 2. Always run rule-based extraction (fast, works as base)
+  // 2. Rule-based extraction (handles IG URLs + basic snippet parsing)
   const ruleEntities = extractFromResults(serperResults)
 
-  // 3. Try Claude AI enrichment if API key available
+  // 3. Claude AI extraction — primary source when available
   let entities: ExtractedContact[]
   let mode: 'ai' | 'rule-based' = 'rule-based'
 
@@ -43,7 +43,8 @@ export default defineEventHandler(async (event) => {
       config.anthropicApiKey as string
     )
     if (aiEntities && aiEntities.length > 0) {
-      // Merge: AI entities take priority, rule-based fills gaps
+      // AI entities are primary, rule-based fills in anything AI missed
+      // (especially IG handles extracted directly from instagram.com URLs)
       entities = mergeEntityLists(aiEntities, ruleEntities)
       mode = 'ai'
     } else {
@@ -53,7 +54,7 @@ export default defineEventHandler(async (event) => {
     entities = ruleEntities
   }
 
-  // 4. Check dedup for each entity against DB
+  // 4. Dedup against DB
   const contactsWithDedup = await Promise.all(
     entities.map(async (entity) => {
       const dedup = await checkDuplicate(entity)
