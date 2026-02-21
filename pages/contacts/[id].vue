@@ -1,29 +1,29 @@
 <template>
   <div v-if="contact">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <Button
-          icon="pi pi-arrow-left"
-          severity="secondary"
-          text
-          @click="navigateTo('/')"
-        />
-        <div>
-          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-            {{ contact.name }}
-            <i
-              v-if="contact.cuban_connection"
-              class="pi pi-star-fill text-[var(--color-gold)] text-lg"
-            />
-          </h1>
-          <div class="flex items-center gap-2 mt-1">
-            <StatusBadge :status="contact.status" />
-            <PriorityBadge :priority="contact.priority" />
-            <span v-if="contact.type" class="text-sm text-[var(--color-text-muted)] capitalize">
-              {{ contact.type }}
-            </span>
-          </div>
+    <div class="flex items-start gap-3 mb-6">
+      <Button
+        icon="pi pi-arrow-left"
+        severity="secondary"
+        text
+        size="small"
+        @click="navigateTo('/')"
+        class="shrink-0 mt-1"
+      />
+      <div class="min-w-0">
+        <h1 class="text-lg md:text-2xl font-bold text-white flex items-center gap-2 flex-wrap">
+          <span class="truncate">{{ contact.name }}</span>
+          <i
+            v-if="contact.cuban_connection"
+            class="pi pi-star-fill text-[var(--color-gold)] text-sm md:text-lg"
+          />
+        </h1>
+        <div class="flex items-center gap-2 mt-1 flex-wrap">
+          <StatusBadge :status="contact.status" />
+          <PriorityBadge :priority="contact.priority" />
+          <span v-if="contact.type" class="text-sm text-[var(--color-text-muted)] capitalize">
+            {{ contact.type }}
+          </span>
         </div>
       </div>
     </div>

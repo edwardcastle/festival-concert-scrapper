@@ -1,23 +1,23 @@
 <template>
   <div>
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div class="flex items-center justify-between gap-3 mb-4">
       <div>
-        <h1 class="text-2xl font-bold text-white">Contacts</h1>
-        <p class="text-sm text-[var(--color-text-muted)]">
+        <h1 class="text-xl md:text-2xl font-bold text-white">Contacts</h1>
+        <p class="text-xs md:text-sm text-[var(--color-text-muted)]">
           {{ total }} contact{{ total !== 1 ? 's' : '' }}
         </p>
       </div>
       <div class="flex gap-2">
         <Button
-          label="Export"
           icon="pi pi-download"
           severity="secondary"
           size="small"
           @click="handleExport"
+          v-tooltip="'Export'"
         />
         <Button
-          label="Add Contact"
+          label="Add"
           icon="pi pi-plus"
           severity="info"
           size="small"
@@ -28,13 +28,13 @@
 
     <!-- Filter bar -->
     <div
-      class="flex flex-wrap gap-3 mb-4 p-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg"
+      class="flex flex-wrap gap-2 mb-4 p-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg"
     >
-      <IconField class="flex-1 min-w-48">
+      <IconField class="flex-1 min-w-0">
         <InputIcon class="pi pi-search" />
         <InputText
           v-model="filters.search"
-          placeholder="Search contacts..."
+          placeholder="Search..."
           class="w-full"
           @keyup.enter="applyFilters"
         />
@@ -45,7 +45,7 @@
         optionLabel="label"
         optionValue="value"
         placeholder="Status"
-        class="w-40"
+        class="w-28 md:w-36"
         @change="applyFilters"
       />
       <MultiSelect
@@ -54,7 +54,7 @@
         optionLabel="label"
         optionValue="value"
         placeholder="Country"
-        class="w-40"
+        class="w-28 md:w-36 hidden sm:flex"
         filter
         @change="applyFilters"
       />
@@ -65,7 +65,7 @@
         optionValue="value"
         placeholder="Type"
         showClear
-        class="w-36"
+        class="w-28 md:w-32 hidden sm:flex"
         @change="applyFilters"
       />
       <ToggleButton
@@ -74,7 +74,7 @@
         offLabel="Cuban"
         onIcon="pi pi-star-fill"
         offIcon="pi pi-star"
-        class="w-28"
+        class="w-24 hidden md:flex"
         @change="handleCubanToggle"
       />
       <Button
@@ -89,7 +89,7 @@
     <!-- Bulk actions -->
     <div
       v-if="selectedContacts.length > 0"
-      class="flex items-center gap-3 mb-4 p-3 bg-[var(--color-electric-blue)]/10 border border-[var(--color-electric-blue)]/30 rounded-lg"
+      class="flex flex-wrap items-center gap-2 mb-4 p-3 bg-[var(--color-electric-blue)]/10 border border-[var(--color-electric-blue)]/30 rounded-lg"
     >
       <span class="text-sm text-[var(--color-electric-blue)]">
         {{ selectedContacts.length }} selected
@@ -99,9 +99,9 @@
         :options="statusOptions"
         optionLabel="label"
         optionValue="value"
-        placeholder="Change status"
+        placeholder="Status"
         size="small"
-        class="w-40"
+        class="w-32"
       />
       <Button
         label="Apply"
@@ -111,160 +111,246 @@
         @click="handleBulkStatus"
       />
       <Button
-        label="Delete"
+        icon="pi pi-trash"
         size="small"
         severity="danger"
         @click="handleBulkDelete"
+        v-tooltip="'Delete selected'"
       />
     </div>
 
-    <!-- DataTable -->
-    <DataTable
-      v-model:selection="selectedContacts"
-      :value="contacts"
-      :loading="loading"
-      :lazy="true"
-      :paginator="true"
-      :rows="limit"
-      :totalRecords="total"
-      :first="(page - 1) * limit"
-      @page="onPage"
-      @sort="onSort"
-      :rowClass="rowClass"
-      :rowsPerPageOptions="[10, 25, 50, 100]"
-      removableSort
-      scrollable
-      scrollHeight="calc(100vh - 340px)"
-      class="rounded-lg overflow-hidden border border-[var(--color-border)]"
-      dataKey="id"
-    >
-      <template #empty>
-        <div class="text-center py-12">
-          <i class="pi pi-users text-4xl text-[var(--color-text-muted)] mb-3" />
-          <p class="text-[var(--color-text-muted)]">No contacts found</p>
-          <Button
-            label="Add your first contact"
-            severity="info"
-            size="small"
-            class="mt-3"
-            @click="showAddDialog = true"
-          />
-        </div>
-      </template>
+    <!-- Mobile: Card View -->
+    <div class="md:hidden space-y-3">
+      <div v-if="loading" class="flex justify-center py-8">
+        <ProgressSpinner />
+      </div>
 
-      <Column selectionMode="multiple" headerStyle="width: 3rem" />
+      <div v-else-if="contacts.length === 0" class="text-center py-12">
+        <i class="pi pi-users text-4xl text-[var(--color-text-muted)] mb-3" />
+        <p class="text-[var(--color-text-muted)]">No contacts found</p>
+        <Button
+          label="Add your first contact"
+          severity="info"
+          size="small"
+          class="mt-3"
+          @click="showAddDialog = true"
+        />
+      </div>
 
-      <Column field="name" header="Name" sortable style="min-width: 180px">
-        <template #body="{ data }">
-          <div class="flex items-center gap-2">
-            <NuxtLink
-              :to="`/contacts/${data.id}`"
-              class="text-[var(--color-electric-blue)] hover:underline font-medium"
-            >
-              {{ data.name }}
-            </NuxtLink>
+      <div
+        v-for="c in contacts"
+        :key="c.id"
+        class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4"
+        :class="{
+          'border-l-4 border-l-blue-500': c.status === 'contacted',
+          'border-l-4 border-l-green-500': c.status === 'responded',
+          'border-l-4 border-l-yellow-500': c.status === 'booked',
+        }"
+      >
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <NuxtLink
+            :to="`/contacts/${c.id}`"
+            class="text-[var(--color-electric-blue)] font-semibold text-base hover:underline"
+          >
+            {{ c.name }}
             <i
-              v-if="data.cuban_connection"
-              class="pi pi-star-fill text-[var(--color-gold)] text-xs"
-              v-tooltip="data.cuban_connection"
+              v-if="c.cuban_connection"
+              class="pi pi-star-fill text-[var(--color-gold)] text-xs ml-1"
+            />
+          </NuxtLink>
+          <StatusBadge :status="c.status" />
+        </div>
+
+        <div class="space-y-1.5 text-sm">
+          <div v-if="c.instagram_handle" class="flex items-center gap-2">
+            <i class="pi pi-instagram text-[var(--color-electric-blue)] text-xs w-4" />
+            <a
+              :href="c.instagram_url || `https://instagram.com/${c.instagram_handle}`"
+              target="_blank"
+              class="text-[var(--color-electric-blue)] hover:underline"
+            >
+              @{{ c.instagram_handle }}
+            </a>
+          </div>
+          <div v-if="c.email" class="flex items-center gap-2">
+            <i class="pi pi-envelope text-[var(--color-text-muted)] text-xs w-4" />
+            <a :href="`mailto:${c.email}`" class="text-[var(--color-text-muted)] hover:text-white truncate">
+              {{ c.email }}
+            </a>
+          </div>
+          <div v-if="c.phone" class="flex items-center gap-2">
+            <i class="pi pi-whatsapp text-green-400 text-xs w-4" />
+            <a
+              :href="`https://wa.me/${c.phone.replace(/[^0-9+]/g, '')}`"
+              target="_blank"
+              class="text-green-400 hover:underline"
+            >
+              {{ c.phone }}
+            </a>
+          </div>
+          <div v-if="c.city || c.country" class="flex items-center gap-2 text-[var(--color-text-muted)]">
+            <i class="pi pi-map-marker text-xs w-4" />
+            <span>{{ [c.city, c.country].filter(Boolean).join(', ') }}</span>
+          </div>
+          <div v-if="c.event_type || c.type" class="flex items-center gap-2 text-[var(--color-text-muted)]">
+            <i class="pi pi-tag text-xs w-4" />
+            <span class="capitalize">{{ c.event_type || c.type }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile pagination -->
+      <div v-if="contacts.length > 0" class="flex items-center justify-between pt-2">
+        <Button
+          icon="pi pi-chevron-left"
+          severity="secondary"
+          size="small"
+          :disabled="page <= 1"
+          @click="setPage(page - 1)"
+        />
+        <span class="text-sm text-[var(--color-text-muted)]">
+          Page {{ page }} / {{ Math.ceil(total / limit) || 1 }}
+        </span>
+        <Button
+          icon="pi pi-chevron-right"
+          severity="secondary"
+          size="small"
+          :disabled="page >= Math.ceil(total / limit)"
+          @click="setPage(page + 1)"
+        />
+      </div>
+    </div>
+
+    <!-- Desktop: DataTable -->
+    <div class="hidden md:block">
+      <DataTable
+        v-model:selection="selectedContacts"
+        :value="contacts"
+        :loading="loading"
+        :lazy="true"
+        :paginator="true"
+        :rows="limit"
+        :totalRecords="total"
+        :first="(page - 1) * limit"
+        @page="onPage"
+        @sort="onSort"
+        :rowClass="rowClass"
+        :rowsPerPageOptions="[10, 25, 50, 100]"
+        removableSort
+        scrollable
+        scrollHeight="calc(100vh - 340px)"
+        class="rounded-lg overflow-hidden border border-[var(--color-border)]"
+        dataKey="id"
+      >
+        <template #empty>
+          <div class="text-center py-12">
+            <i class="pi pi-users text-4xl text-[var(--color-text-muted)] mb-3" />
+            <p class="text-[var(--color-text-muted)]">No contacts found</p>
+            <Button
+              label="Add your first contact"
+              severity="info"
+              size="small"
+              class="mt-3"
+              @click="showAddDialog = true"
             />
           </div>
         </template>
-      </Column>
 
-      <Column
-        field="instagram_handle"
-        header="Instagram"
-        style="min-width: 150px"
-      >
-        <template #body="{ data }">
-          <a
-            v-if="data.instagram_handle"
-            :href="data.instagram_url || `https://instagram.com/${data.instagram_handle}`"
-            target="_blank"
-            class="text-[var(--color-electric-blue)] hover:underline text-sm"
-          >
-            @{{ data.instagram_handle }}
-          </a>
-          <span v-else class="text-[var(--color-text-muted)]">—</span>
-        </template>
-      </Column>
+        <Column selectionMode="multiple" headerStyle="width: 3rem" />
 
-      <Column field="email" header="Email / Contact" style="min-width: 180px">
-        <template #body="{ data }">
-          <a
-            v-if="data.email"
-            :href="`mailto:${data.email}`"
-            class="text-sm text-[var(--color-electric-blue)] hover:underline"
-          >
-            {{ data.email }}
-          </a>
-          <span v-else class="text-[var(--color-text-muted)]">—</span>
-        </template>
-      </Column>
+        <Column field="name" header="Name" sortable style="min-width: 180px">
+          <template #body="{ data }">
+            <div class="flex items-center gap-2">
+              <NuxtLink
+                :to="`/contacts/${data.id}`"
+                class="text-[var(--color-electric-blue)] hover:underline font-medium"
+              >
+                {{ data.name }}
+              </NuxtLink>
+              <i
+                v-if="data.cuban_connection"
+                class="pi pi-star-fill text-[var(--color-gold)] text-xs"
+                v-tooltip="data.cuban_connection"
+              />
+            </div>
+          </template>
+        </Column>
 
-      <Column field="phone" header="WhatsApp / Phone" style="min-width: 140px">
-        <template #body="{ data }">
-          <a
-            v-if="data.phone"
-            :href="`https://wa.me/${data.phone.replace(/[^0-9+]/g, '')}`"
-            target="_blank"
-            class="text-sm text-green-400 hover:underline"
-          >
-            {{ data.phone }}
-          </a>
-          <span v-else class="text-[var(--color-text-muted)]">—</span>
-        </template>
-      </Column>
+        <Column field="instagram_handle" header="Instagram" style="min-width: 150px">
+          <template #body="{ data }">
+            <a
+              v-if="data.instagram_handle"
+              :href="data.instagram_url || `https://instagram.com/${data.instagram_handle}`"
+              target="_blank"
+              class="text-[var(--color-electric-blue)] hover:underline text-sm"
+            >
+              @{{ data.instagram_handle }}
+            </a>
+            <span v-else class="text-[var(--color-text-muted)]">—</span>
+          </template>
+        </Column>
 
-      <Column field="city" header="City" sortable style="min-width: 100px" />
-      <Column field="country" header="Country" sortable style="min-width: 110px" />
+        <Column field="email" header="Email / Contact" style="min-width: 180px">
+          <template #body="{ data }">
+            <a
+              v-if="data.email"
+              :href="`mailto:${data.email}`"
+              class="text-sm text-[var(--color-electric-blue)] hover:underline"
+            >
+              {{ data.email }}
+            </a>
+            <span v-else class="text-[var(--color-text-muted)]">—</span>
+          </template>
+        </Column>
 
-      <Column field="event_type" header="Event Type" sortable style="min-width: 110px">
-        <template #body="{ data }">
-          <span class="capitalize text-sm">{{ data.event_type || data.type || '—' }}</span>
-        </template>
-      </Column>
+        <Column field="phone" header="WhatsApp / Phone" style="min-width: 140px">
+          <template #body="{ data }">
+            <a
+              v-if="data.phone"
+              :href="`https://wa.me/${data.phone.replace(/[^0-9+]/g, '')}`"
+              target="_blank"
+              class="text-sm text-green-400 hover:underline"
+            >
+              {{ data.phone }}
+            </a>
+            <span v-else class="text-[var(--color-text-muted)]">—</span>
+          </template>
+        </Column>
 
-      <Column field="instagram_followers" header="Followers" style="min-width: 90px">
-        <template #body="{ data }">
-          <span v-if="data.instagram_followers" class="text-sm">{{ data.instagram_followers }}</span>
-          <span v-else class="text-[var(--color-text-muted)]">—</span>
-        </template>
-      </Column>
+        <Column field="city" header="City" sortable style="min-width: 100px" />
+        <Column field="country" header="Country" sortable style="min-width: 110px" />
 
-      <Column field="cuban_connection" header="Cuban/Reparto Link" style="min-width: 140px">
-        <template #body="{ data }">
-          <span v-if="data.cuban_connection" class="text-[var(--color-gold)] text-xs">
-            {{ data.cuban_connection }}
-          </span>
-          <span v-else class="text-[var(--color-text-muted)]">—</span>
-        </template>
-      </Column>
+        <Column field="event_type" header="Event Type" sortable style="min-width: 110px">
+          <template #body="{ data }">
+            <span class="capitalize text-sm">{{ data.event_type || data.type || '—' }}</span>
+          </template>
+        </Column>
 
-      <Column field="status" header="Status" sortable style="min-width: 110px">
-        <template #body="{ data }">
-          <StatusBadge :status="data.status" />
-        </template>
-      </Column>
+        <Column field="status" header="Status" sortable style="min-width: 110px">
+          <template #body="{ data }">
+            <StatusBadge :status="data.status" />
+          </template>
+        </Column>
 
-      <Column field="admin_notes" header="Notes" style="min-width: 160px" class="hidden lg:table-cell">
-        <template #body="{ data }">
-          <span v-if="data.admin_notes" class="text-xs text-[var(--color-text-muted)] line-clamp-2">
-            {{ data.admin_notes }}
-          </span>
-          <span v-else class="text-[var(--color-text-muted)]">—</span>
-        </template>
-      </Column>
-    </DataTable>
+        <Column field="admin_notes" header="Notes" style="min-width: 160px">
+          <template #body="{ data }">
+            <span v-if="data.admin_notes" class="text-xs text-[var(--color-text-muted)] line-clamp-2">
+              {{ data.admin_notes }}
+            </span>
+            <span v-else class="text-[var(--color-text-muted)]">—</span>
+          </template>
+        </Column>
+      </DataTable>
+    </div>
 
     <!-- Add Contact Dialog -->
     <Dialog
       v-model:visible="showAddDialog"
       header="Add Contact"
       :modal="true"
-      :style="{ width: '700px' }"
+      :style="{ width: '95vw', maxWidth: '700px' }"
       :closable="true"
+      :breakpoints="{ '640px': '100vw' }"
     >
       <ContactForm v-model="newContact" />
       <template #footer>
@@ -295,6 +381,7 @@ import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
 import ToggleButton from 'primevue/togglebutton'
 import Dialog from 'primevue/dialog'
+import ProgressSpinner from 'primevue/progressspinner'
 import { useToast } from 'primevue/usetoast'
 import type { Contact, ContactStatus } from '~/types'
 
@@ -449,11 +536,5 @@ async function handleExport() {
   } catch {
     toast.add({ severity: 'error', summary: 'Export failed', life: 3000 })
   }
-}
-
-function formatDate(date: string): string {
-  if (!date) return '—'
-  const d = new Date(date + 'Z')
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
 }
 </script>

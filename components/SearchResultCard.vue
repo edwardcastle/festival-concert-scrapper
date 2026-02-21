@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border rounded-lg p-4 bg-[var(--color-surface)] hover:border-[var(--color-electric-blue)]/40 transition-colors"
+    class="border rounded-lg p-3 md:p-4 bg-[var(--color-surface)] hover:border-[var(--color-electric-blue)]/40 transition-colors"
     :class="{
       'border-[var(--color-gold)]/50': contact.cuban_connection,
       'border-[var(--color-border)]': !contact.cuban_connection,
@@ -97,7 +97,7 @@
       <!-- Website -->
       <div v-if="contact.website && !contact.website.includes('instagram.com')" class="flex items-center gap-2">
         <i class="pi pi-globe text-[var(--color-text-muted)]" />
-        <a :href="contact.website" target="_blank" class="text-[var(--color-electric-blue)] hover:underline truncate max-w-64">
+        <a :href="contact.website" target="_blank" class="text-[var(--color-electric-blue)] hover:underline truncate max-w-40 md:max-w-64">
           {{ contact.website.replace(/^https?:\/\/(www\.)?/, '') }}
         </a>
       </div>

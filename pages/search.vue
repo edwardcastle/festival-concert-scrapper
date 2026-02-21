@@ -1,23 +1,29 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-white mb-6">Search & Discover</h1>
+    <h1 class="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">Search & Discover</h1>
 
     <!-- Search input -->
-    <div class="max-w-2xl mx-auto mb-8">
-      <div class="relative">
-        <IconField class="w-full">
+    <div class="max-w-2xl mx-auto mb-6 md:mb-8">
+      <div class="flex gap-2">
+        <IconField class="flex-1">
           <InputIcon class="pi pi-search" />
           <InputText
             v-model="query"
-            placeholder="Search for Latin music promoters, festivals, venues..."
-            class="w-full text-lg"
+            placeholder="Search promoters, festivals..."
+            class="w-full"
             @keyup.enter="handleSearch"
           />
         </IconField>
+        <Button
+          icon="pi pi-search"
+          severity="info"
+          @click="handleSearch"
+          class="md:hidden shrink-0"
+        />
       </div>
 
       <!-- Suggested queries -->
-      <div class="flex flex-wrap gap-2 mt-3">
+      <div class="flex flex-wrap gap-1.5 md:gap-2 mt-3">
         <Button
           v-for="suggestion in suggestions"
           :key="suggestion"
@@ -32,13 +38,13 @@
     </div>
 
     <!-- Mode badge + stats -->
-    <div v-if="mode" class="flex items-center justify-center gap-2 mb-4">
+    <div v-if="mode" class="flex flex-wrap items-center justify-center gap-2 mb-4 text-center">
       <Tag
-        :value="mode === 'ai' ? 'AI Extracted' : 'Auto-extracted — review recommended'"
+        :value="mode === 'ai' ? 'AI Extracted' : 'Auto-extracted'"
         :severity="mode === 'ai' ? 'success' : 'warn'"
       />
-      <span class="text-sm text-[var(--color-text-muted)]">
-        {{ contacts.length }} contacts found from {{ searchCount }} Google results
+      <span class="text-xs md:text-sm text-[var(--color-text-muted)]">
+        {{ contacts.length }} contacts from {{ searchCount }} results
       </span>
     </div>
 
