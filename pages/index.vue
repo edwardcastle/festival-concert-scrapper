@@ -68,16 +68,6 @@
         class="w-36"
         @change="applyFilters"
       />
-      <Select
-        v-model="filters.priority"
-        :options="priorityOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Priority"
-        showClear
-        class="w-36"
-        @change="applyFilters"
-      />
       <ToggleButton
         v-model="cubanToggle"
         onLabel="Cuban ★"
@@ -182,24 +172,15 @@
         </template>
       </Column>
 
-      <Column field="type" header="Type" sortable style="min-width: 100px">
-        <template #body="{ data }">
-          <span class="capitalize text-sm">{{ data.type || '—' }}</span>
-        </template>
-      </Column>
-
-      <Column field="city" header="City" sortable style="min-width: 100px" />
-      <Column field="country" header="Country" sortable style="min-width: 110px" />
-
       <Column
         field="instagram_handle"
         header="Instagram"
-        style="min-width: 130px"
+        style="min-width: 150px"
       >
         <template #body="{ data }">
           <a
             v-if="data.instagram_handle"
-            :href="`https://instagram.com/${data.instagram_handle}`"
+            :href="data.instagram_url || `https://instagram.com/${data.instagram_handle}`"
             target="_blank"
             class="text-[var(--color-electric-blue)] hover:underline text-sm"
           >
@@ -209,12 +190,12 @@
         </template>
       </Column>
 
-      <Column field="email" header="Email" style="min-width: 180px">
+      <Column field="email" header="Email / Contact" style="min-width: 180px">
         <template #body="{ data }">
           <a
             v-if="data.email"
             :href="`mailto:${data.email}`"
-            class="text-sm text-[var(--color-text-muted)] hover:text-white"
+            class="text-sm text-[var(--color-electric-blue)] hover:underline"
           >
             {{ data.email }}
           </a>
@@ -222,47 +203,57 @@
         </template>
       </Column>
 
-      <Column field="status" header="Status" sortable style="min-width: 120px">
+      <Column field="phone" header="WhatsApp / Phone" style="min-width: 140px">
         <template #body="{ data }">
-          <StatusBadge :status="data.status" />
+          <a
+            v-if="data.phone"
+            :href="`https://wa.me/${data.phone.replace(/[^0-9+]/g, '')}`"
+            target="_blank"
+            class="text-sm text-green-400 hover:underline"
+          >
+            {{ data.phone }}
+          </a>
+          <span v-else class="text-[var(--color-text-muted)]">—</span>
         </template>
       </Column>
 
-      <Column field="priority" header="Priority" sortable style="min-width: 90px">
+      <Column field="city" header="City" sortable style="min-width: 100px" />
+      <Column field="country" header="Country" sortable style="min-width: 110px" />
+
+      <Column field="event_type" header="Event Type" sortable style="min-width: 110px">
         <template #body="{ data }">
-          <PriorityBadge :priority="data.priority" />
+          <span class="capitalize text-sm">{{ data.event_type || data.type || '—' }}</span>
         </template>
       </Column>
 
-      <Column field="cuban_connection" header="Cuban" style="min-width: 80px" class="hidden md:table-cell">
+      <Column field="instagram_followers" header="Followers" style="min-width: 90px">
         <template #body="{ data }">
-          <span v-if="data.cuban_connection" class="text-[var(--color-gold)] text-xs truncate max-w-24 block">
+          <span v-if="data.instagram_followers" class="text-sm">{{ data.instagram_followers }}</span>
+          <span v-else class="text-[var(--color-text-muted)]">—</span>
+        </template>
+      </Column>
+
+      <Column field="cuban_connection" header="Cuban/Reparto Link" style="min-width: 140px">
+        <template #body="{ data }">
+          <span v-if="data.cuban_connection" class="text-[var(--color-gold)] text-xs">
             {{ data.cuban_connection }}
           </span>
           <span v-else class="text-[var(--color-text-muted)]">—</span>
         </template>
       </Column>
 
-      <Column field="tags" header="Tags" style="min-width: 120px" class="hidden lg:table-cell">
+      <Column field="status" header="Status" sortable style="min-width: 110px">
         <template #body="{ data }">
-          <div v-if="data.tags" class="flex flex-wrap gap-1">
-            <Tag
-              v-for="tag in parseTags(data.tags)"
-              :key="tag"
-              :value="tag"
-              severity="secondary"
-              class="text-xs"
-            />
-          </div>
-          <span v-else class="text-[var(--color-text-muted)]">—</span>
+          <StatusBadge :status="data.status" />
         </template>
       </Column>
 
-      <Column field="updated_at" header="Updated" sortable style="min-width: 100px">
+      <Column field="admin_notes" header="Notes" style="min-width: 160px" class="hidden lg:table-cell">
         <template #body="{ data }">
-          <span class="text-xs text-[var(--color-text-muted)]">
-            {{ formatDate(data.updated_at) }}
+          <span v-if="data.admin_notes" class="text-xs text-[var(--color-text-muted)] line-clamp-2">
+            {{ data.admin_notes }}
           </span>
+          <span v-else class="text-[var(--color-text-muted)]">—</span>
         </template>
       </Column>
     </DataTable>
@@ -303,7 +294,6 @@ import InputIcon from 'primevue/inputicon'
 import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
 import ToggleButton from 'primevue/togglebutton'
-import Tag from 'primevue/tag'
 import Dialog from 'primevue/dialog'
 import { useToast } from 'primevue/usetoast'
 import type { Contact, ContactStatus } from '~/types'
@@ -359,13 +349,6 @@ const typeOptions = [
   { label: 'Club', value: 'club' },
   { label: 'Media', value: 'media' },
   { label: 'Agency', value: 'agency' },
-]
-
-const priorityOptions = [
-  { label: 'All', value: '' },
-  { label: 'Normal', value: '0' },
-  { label: 'High', value: '1' },
-  { label: 'Urgent', value: '2' },
 ]
 
 const countryOptions = computed(() => {
@@ -462,16 +445,6 @@ async function handleExport() {
     URL.revokeObjectURL(url)
   } catch {
     toast.add({ severity: 'error', summary: 'Export failed', life: 3000 })
-  }
-}
-
-function parseTags(tags: string): string[] {
-  if (!tags) return []
-  try {
-    const parsed = JSON.parse(tags)
-    return Array.isArray(parsed) ? parsed : [tags]
-  } catch {
-    return tags.split(',').map((t) => t.trim()).filter(Boolean)
   }
 }
 

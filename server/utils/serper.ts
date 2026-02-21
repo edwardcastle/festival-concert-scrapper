@@ -42,16 +42,17 @@ export async function multiSearch(
   query: string,
   apiKey: string
 ): Promise<SerperResult[]> {
-  const [mainResults, igResults] = await Promise.all([
+  const [mainResults, igResults, igSiteResults] = await Promise.all([
     searchGoogle(query, apiKey, 20),
     searchGoogle(`${query} instagram`, apiKey, 10),
+    searchGoogle(`${query} site:instagram.com`, apiKey, 10),
   ])
 
   // Merge and deduplicate by URL
   const seen = new Set<string>()
   const merged: SerperResult[] = []
 
-  for (const results of [mainResults, igResults]) {
+  for (const results of [mainResults, igResults, igSiteResults]) {
     for (const r of results) {
       if (!seen.has(r.link)) {
         seen.add(r.link)
